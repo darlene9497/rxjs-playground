@@ -1,4 +1,43 @@
 import { Observable } from 'rxjs';
+import { ajax } from 'rxjs/ajax'
+
+/**cold observable - HTTP request */
+const ajax$ = ajax<any>('https://random-data-api.com/api/name/random_name')
+    
+ajax$.subscribe(
+    data => console.log('name 1:', data.response.first_name)
+)
+
+ajax$.subscribe(
+    data => console.log('name 2:', data.response.first_name)
+)
+
+ajax$.subscribe(
+    data => console.log('name 3:', data.response.first_name)
+)
+
+/**hot observable */
+const helloButton = document.querySelector('button#hello')
+
+const helloClick$ = new Observable<MouseEvent>(subscriber => {
+    helloButton.addEventListener('click', (event: MouseEvent) => {
+        subscriber.next(event);
+    })
+})
+
+helloClick$.subscribe(
+    event => console.log('sub 1:', event.type, event.x, event.y)
+)
+
+setTimeout(() => {
+    console.log('subscription 2 starts');
+    helloClick$.subscribe(
+        event => console.log('sub 2:', event.type, event.x, event.y)
+    );
+}, 5000);
+
+
+
 /**exercise */
 // const observer$ = new Observable<string>(subscriber => {
 //     subscriber.next('Alice');
@@ -21,25 +60,25 @@ import { Observable } from 'rxjs';
 // })
 
 /**unsubscribing */
-const interval$ = new Observable<number>(subscriber => {
-    let counter = 1
+// const interval$ = new Observable<number>(subscriber => {
+//     let counter = 1
 
-    const checkInterval = setInterval(() => {
-        console.log('Emitted', counter)
-        subscriber.next(counter++)
-    }, 2000)
+//     const checkInterval = setInterval(() => {
+//         console.log('Emitted', counter)
+//         subscriber.next(counter++)
+//     }, 2000)
 
-    return () => {
-        clearInterval(checkInterval)
-    }
-})
+//     return () => {
+//         clearInterval(checkInterval)
+//     }
+// })
 
-const subscription = interval$.subscribe(value => console.log(value))
+// const subscription = interval$.subscribe(value => console.log(value))
 
-setTimeout(() => {
-    console.log('Unsubscribed')
-    subscription.unsubscribe()
-}, 7000)
+// setTimeout(() => {
+//     console.log('Unsubscribed')
+//     subscription.unsubscribe()
+// }, 7000)
 // const observable$ = new Observable<string>(subscriber => {
 //   subscriber.next('Darlene');
 //   setTimeout(() => subscriber.next('Norman'), 2000);
