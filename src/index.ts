@@ -1,42 +1,94 @@
-import { Observable } from 'rxjs';
+import { Observable, from } from 'rxjs';
 import { ajax } from 'rxjs/ajax'
 
-/**cold observable - HTTP request */
-const ajax$ = ajax<any>('https://random-data-api.com/api/name/random_name')
-    
-ajax$.subscribe(
-    data => console.log('name 1:', data.response.first_name)
-)
+/**creation functions */
+/**of function */
+of('Norman', 'Brolin', 'Darlene').subscribe({
+    next: value => console.log(value),
+    complete: () => console.log('Completed')
+});
 
-ajax$.subscribe(
-    data => console.log('name 2:', data.response.first_name)
-)
+function of(...args: string[]): Observable<string> {
+    return new Observable<string>(subscriber => {
+        for(let i = 0; i < args.length; i++) {
+        subscriber.next(args[i]);
+    }
+        subscriber.complete();
+    });
+}
 
-ajax$.subscribe(
-    data => console.log('name 3:', data.response.first_name)
-)
+/**from function */
+const somePromise = new Promise((resolve, reject) => {
+    //resolve('Resolved!');
+    reject('Rejected!');
+});
 
-/**hot observable */
-const helloButton = document.querySelector('button#hello')
+const observableFromPromise$ = from(somePromise);
 
-const helloClick$ = new Observable<MouseEvent>(subscriber => {
-    helloButton.addEventListener('click', (event: MouseEvent) => {
-        subscriber.next(event);
-    })
-})
+observableFromPromise$.subscribe({
+    next: value => console.log(value),
+    error: err => console.log(err),
+    complete: () => console.log('Completed')
+});
 
-helloClick$.subscribe(
-    event => console.log('sub 1:', event.type, event.x, event.y)
-)
+/**fromEvent() function*/
+const triggerButton = document.querySelector('button#trigger');
+
+const triggerClick$ = new Observable<MouseEvent>(subscriber => {
+const clickHandlerFn = (event: MouseEvent) => {
+    console.log('Event callback executed');
+    subscriber.next(event);
+};
+
+triggerButton.addEventListener('click', clickHandlerFn);
+return () => {
+    triggerButton.removeEventListener('click', clickHandlerFn);
+};
+});
+
+const subscription = triggerClick$.subscribe(
+    event => console.log(event.type, event.x, event.y)
+);
 
 setTimeout(() => {
-    console.log('subscription 2 starts');
-    helloClick$.subscribe(
-        event => console.log('sub 2:', event.type, event.x, event.y)
-    );
+    console.log('Unsubscribe');
+    subscription.unsubscribe();
 }, 5000);
 
+/**cold observable - HTTP request */
+// const ajax$ = ajax<any>('https://random-data-api.com/api/name/random_name')
+    
+// ajax$.subscribe(
+//     data => console.log('name 1:', data.response.first_name)
+// )
 
+// ajax$.subscribe(
+//     data => console.log('name 2:', data.response.first_name)
+// )
+
+// ajax$.subscribe(
+//     data => console.log('name 3:', data.response.first_name)
+// )
+
+/**hot observable */
+// const helloButton = document.querySelector('button#hello')
+
+// const helloClick$ = new Observable<MouseEvent>(subscriber => {
+//     helloButton.addEventListener('click', (event: MouseEvent) => {
+//         subscriber.next(event);
+//     })
+// })
+
+// helloClick$.subscribe(
+//     event => console.log('sub 1:', event.type, event.x, event.y)
+// )
+
+// setTimeout(() => {
+//     console.log('subscription 2 starts');
+//     helloClick$.subscribe(
+//         event => console.log('sub 2:', event.type, event.x, event.y)
+//     );
+// }, 5000);
 
 /**exercise */
 // const observer$ = new Observable<string>(subscriber => {
