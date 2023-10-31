@@ -1,60 +1,148 @@
-import { Observable, from } from 'rxjs';
+import { Observable, from, timer, forkJoin } from 'rxjs';
 import { ajax } from 'rxjs/ajax'
 
 /**creation functions */
 /**of function */
-of('Norman', 'Brolin', 'Darlene').subscribe({
-    next: value => console.log(value),
-    complete: () => console.log('Completed')
-});
+// of('Norman', 'Brolin', 'Darlene').subscribe({
+//     next: value => console.log(value),
+//     complete: () => console.log('Completed')
+// });
 
-function of(...args: string[]): Observable<string> {
-    return new Observable<string>(subscriber => {
-        for(let i = 0; i < args.length; i++) {
-        subscriber.next(args[i]);
-    }
-        subscriber.complete();
-    });
-}
+// function of(...args: string[]): Observable<string> {
+//     return new Observable<string>(subscriber => {
+//         for(let i = 0; i < args.length; i++) {
+//         subscriber.next(args[i]);
+//     }
+//         subscriber.complete();
+//     });
+// }
 
 /**from function */
-const somePromise = new Promise((resolve, reject) => {
-    //resolve('Resolved!');
-    reject('Rejected!');
-});
+// const somePromise = new Promise((resolve, reject) => {
+//     //resolve('Resolved!');
+//     reject('Rejected!');
+// });
 
-const observableFromPromise$ = from(somePromise);
+// const observableFromPromise$ = from(somePromise);
 
-observableFromPromise$.subscribe({
-    next: value => console.log(value),
-    error: err => console.log(err),
-    complete: () => console.log('Completed')
-});
+// observableFromPromise$.subscribe({
+//     next: value => console.log(value),
+//     error: err => console.log(err),
+//     complete: () => console.log('Completed')
+// });
 
 /**fromEvent() function*/
-const triggerButton = document.querySelector('button#trigger');
+// const triggerButton = document.querySelector('button#trigger');
 
-const triggerClick$ = new Observable<MouseEvent>(subscriber => {
-const clickHandlerFn = (event: MouseEvent) => {
-    console.log('Event callback executed');
-    subscriber.next(event);
-};
+// const triggerClick$ = new Observable<MouseEvent>(subscriber => {
+// const clickHandlerFn = (event: MouseEvent) => {
+//     console.log('Event callback executed');
+//     subscriber.next(event);
+// };
 
-triggerButton.addEventListener('click', clickHandlerFn);
-return () => {
-    triggerButton.removeEventListener('click', clickHandlerFn);
-};
-});
+// triggerButton.addEventListener('click', clickHandlerFn);
+// return () => {
+//     triggerButton.removeEventListener('click', clickHandlerFn);
+// };
+// });
 
-const subscription = triggerClick$.subscribe(
-    event => console.log(event.type, event.x, event.y)
+// const subscription = triggerClick$.subscribe(
+//     event => console.log(event.type, event.x, event.y)
+// );
+
+// setTimeout(() => {
+//     console.log('Unsubscribe');
+//     subscription.unsubscribe();
+// }, 5000);
+
+/**timer/interval() function */
+// console.log('Timer function has started');
+
+// const timer$ = new Observable<number>(subscriber => {
+//     const timeoutId = setTimeout(() => {
+//         //console.log('Timeout!');
+//         subscriber.next(0);
+//         subscriber.complete();
+//     }, 2000);
+    
+//     return () => clearTimeout(timeoutId);
+// });
+
+// const subscription = timer$.subscribe({
+//     next: value => console.log(value),
+//     complete: () => console.log('Timer has completed')
+// });
+
+// setTimeout(() => {
+//     subscription.unsubscribe();
+//     console.log('Unsubscribe from timeout');
+// }, 1000);
+
+/**interval() function */
+// console.log('Interval function has started');
+
+// const interval$ = new Observable<number>(subscriber => {
+//     let counter = 0;
+    
+//     const intervalId = setInterval(() => {
+//         subscriber.next(counter++);
+//     }, 1000);
+    
+//     return () => clearInterval(intervalId);
+// });
+
+// const subscription = interval$.subscribe({
+//     next: value => console.log(value),
+//     complete: () => console.log('Interval has completed')
+// });
+
+// setTimeout(() => {
+//     subscription.unsubscribe();
+//     console.log('Unsubscribe from the interval');
+// }, 5000);
+
+/**forkJoin() function - make multiple HTTP calls */
+const randomName$ = ajax('https://random-data-api.com/api/name/random_name');
+
+const randomNation$ = ajax('https://random-data-api.com/api/nation/random_nation');
+
+const randomFood$ = ajax('https://random-data-api.com/api/food/random_food');
+
+// randomName$.subscribe(ajaxResponse => console.log(ajaxResponse.response.first_name));
+// randomNation$.subscribe(ajaxResponse => console.log(ajaxResponse.response.capital));
+// randomFood$.subscribe(ajaxResponse => console.log(ajaxResponse.response.dish));
+
+forkJoin<any>([randomName$, randomNation$, randomFood$]).subscribe(
+    ([nameAjax, nationAjax, foodAjax]) => 
+    console.log(`${nameAjax.response.first_name} is from ${nationAjax.response.capital} and likes to eat ${foodAjax.response.dish}.`)
 );
 
-setTimeout(() => {
-    console.log('Unsubscribe');
-    subscription.unsubscribe();
-}, 5000);
+/**forkJoin error scenario */
+const a$ = new Observable(subscriber => {
+    setTimeout(() => {
+        subscriber.next('A');
+        subscriber.complete();
+    }, 5000);
 
+    return () => {
+        console.log('A teardown');
+    };
+});
+
+const b$ = new Observable(subscriber => {
+    setTimeout(() => {
+        subscriber.error('Failure from B!');
+    }, 3000);
+    
+    return () => {
+        console.log('B teardown');
+    };
+});
+
+forkJoin([a$, b$]).subscribe({
+    next: value => console.log(value),
+    error: err => console.log('Error:', err)
+});
 /**cold observable - HTTP request */
 // const ajax$ = ajax<any>('https://random-data-api.com/api/name/random_name')
     
